@@ -13,8 +13,8 @@ function AddEmployee({ employees, setEmployees }) {
 
     try {
       const res = await axios.post(
-        "http://127.0.0.1:8000/api/employees/",
-        {
+  "http://localhost:5000/api/employees",
+  {
           name,
           email,
           department,

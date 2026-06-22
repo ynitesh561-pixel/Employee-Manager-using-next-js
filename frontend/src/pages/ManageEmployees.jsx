@@ -6,17 +6,17 @@ function ManageEmployees({ employees, setEmployees }) {
   const [editEmployee, setEditEmployee] = useState(null);
   const [message, setMessage] = useState("");
 
-  // DELETE EMPLOYEE
+  
   const handleDelete = async (id) => {
     try {
       await axios.delete(
-        `http://127.0.0.1:8000/api/employees/${id}/`
+        `http://localhost:5000/api/employees/${id}`
       );
 
    
-      setEmployees((prev) =>
-        prev.filter((emp) => emp.id !== id)
-      );
+     setEmployees((prev) =>
+  prev.filter((emp) => emp._id !== id)
+);
 
       setMessage("Employee Deleted Successfully ");
 
@@ -36,20 +36,19 @@ function ManageEmployees({ employees, setEmployees }) {
  
   const handleUpdate = async () => {
     try {
-      const res = await axios.patch(
-        `http://127.0.0.1:8000/api/employees/${editEmployee.id}/`,
+    const res = await axios.patch(
+  `http://localhost:5000/api/employees/${editEmployee._id}`,
         {
           name: editEmployee.name,
           email: editEmployee.email,
           department: editEmployee.department,
-          salary: Number(editEmployee.salary), // FIX: convert to number
+          salary: Number(editEmployee.salary), 
         }
       );
 
-      const updatedEmployees = employees.map((emp) =>
-        emp.id === editEmployee.id ? res.data : emp
-      );
-
+   const updatedEmployees = employees.map((emp) =>
+  emp._id === editEmployee._id ? res.data : emp
+);
       setEmployees(updatedEmployees);
       setEditEmployee(null);
 
@@ -102,7 +101,7 @@ function ManageEmployees({ employees, setEmployees }) {
 
         <tbody>
           {filteredEmployees.map((emp) => (
-            <tr key={emp.id}>
+            <tr key={emp._id}>
               <td>{emp.name}</td>
               <td>{emp.email}</td>
               <td>{emp.department}</td>
@@ -118,7 +117,7 @@ function ManageEmployees({ employees, setEmployees }) {
 
                 <button
                   className="delete-btn"
-                  onClick={() => handleDelete(emp.id)}
+                  onClick={() => handleDelete(emp._id)}
                 >
                   Delete
                 </button>
