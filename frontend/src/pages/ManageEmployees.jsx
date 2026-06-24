@@ -6,20 +6,25 @@ function ManageEmployees({ employees, setEmployees }) {
   const [editEmployee, setEditEmployee] = useState(null);
   const [message, setMessage] = useState("");
 
-  
+  const token = localStorage.getItem("token");
+
+  // DELETE EMPLOYEE
   const handleDelete = async (id) => {
     try {
       await axios.delete(
-        `http://localhost:5000/api/employees/${id}`
+        `http://localhost:5000/api/employees/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-   
-     setEmployees((prev) =>
-  prev.filter((emp) => emp._id !== id)
-);
+      setEmployees((prev) =>
+        prev.filter((emp) => emp._id !== id)
+      );
 
-      setMessage("Employee Deleted Successfully ");
-
+      setMessage("Employee Deleted Successfully");
       setTimeout(() => setMessage(""), 2000);
     } catch (error) {
       console.log(error);
@@ -28,32 +33,45 @@ function ManageEmployees({ employees, setEmployees }) {
     }
   };
 
-  
+  // OPEN EDIT
   const handleEdit = (employee) => {
     setEditEmployee({ ...employee });
   };
 
- 
+  // UPDATE EMPLOYEE
   const handleUpdate = async () => {
     try {
-    const res = await axios.patch(
-  `http://localhost:5000/api/employees/${editEmployee._id}`,
+      const res = await axios.patch(
+        `http://localhost:5000/api/employees/${editEmployee._id}`,
         {
           name: editEmployee.name,
           email: editEmployee.email,
           department: editEmployee.department,
-          salary: Number(editEmployee.salary), 
+          salary: Number(editEmployee.salary),
+
+          // NEW FIELDS
+          role: editEmployee.role,
+          phone: editEmployee.phone,
+          address: editEmployee.address,
+          status: editEmployee.status,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
-   const updatedEmployees = employees.map((emp) =>
-  emp._id === editEmployee._id ? res.data : emp
-);
-      setEmployees(updatedEmployees);
+      const updated = employees.map((emp) =>
+        emp._id === editEmployee._id
+          ? res.data
+          : emp
+      );
+
+      setEmployees(updated);
       setEditEmployee(null);
 
-      setMessage("Employee Updated Successfully ");
-
+      setMessage("Employee Updated Successfully");
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.log(error);
@@ -62,23 +80,23 @@ function ManageEmployees({ employees, setEmployees }) {
     }
   };
 
-  
+  // SEARCH
   const filteredEmployees = employees.filter((emp) =>
-    `${emp.name || ""} ${emp.email || ""} ${emp.department || ""}`
+    `${emp.name || ""} ${emp.email || ""} ${emp.department || ""} ${emp.role || ""}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
   return (
-    <div>
+    <div className="manage-container">
       <h2>Manage Employees</h2>
 
-     
       {message && (
-        <div className="success-toast">{message}</div>
+        <div className="success-toast">
+          {message}
+        </div>
       )}
 
-      
       <input
         type="text"
         placeholder="Search Employee..."
@@ -87,47 +105,56 @@ function ManageEmployees({ employees, setEmployees }) {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-     
       <table>
         <thead>
           <tr>
             <th>Name</th>
             <th>Email</th>
-            <th>Department</th>
+            <th>Dept</th>
+            <th>Role</th>
+            <th>Status</th>
             <th>Salary</th>
             <th>Action</th>
           </tr>
         </thead>
 
         <tbody>
-          {filteredEmployees.map((emp) => (
-            <tr key={emp._id}>
-              <td>{emp.name}</td>
-              <td>{emp.email}</td>
-              <td>{emp.department}</td>
-              <td>₹{emp.salary}</td>
+          {filteredEmployees.length > 0 ? (
+            filteredEmployees.map((emp) => (
+              <tr key={emp._id}>
+                <td>{emp.name}</td>
+                <td>{emp.email}</td>
+                <td>{emp.department}</td>
+                <td>{emp.role}</td>
+                <td>{emp.status}</td>
+                <td>₹{emp.salary}</td>
 
-              <td>
-                <button
-                  className="edit-btn"
-                  onClick={() => handleEdit(emp)}
-                >
-                  Edit
-                </button>
+                <td>
+                  <button
+                    className="edit-btn"
+                    onClick={() => handleEdit(emp)}
+                  >
+                    Edit
+                  </button>
 
-                <button
-                  className="delete-btn"
-                  onClick={() => handleDelete(emp._id)}
-                >
-                  Delete
-                </button>
-              </td>
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDelete(emp._id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="7">No Employees Found</td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
 
-      
+      {/* EDIT MODAL */}
       {editEmployee && (
         <div className="modal-overlay">
           <div className="modal-box">
@@ -144,7 +171,6 @@ function ManageEmployees({ employees, setEmployees }) {
 
             <input
               type="text"
-              placeholder="Name"
               value={editEmployee.name || ""}
               onChange={(e) =>
                 setEditEmployee({
@@ -152,11 +178,11 @@ function ManageEmployees({ employees, setEmployees }) {
                   name: e.target.value,
                 })
               }
+              placeholder="Name"
             />
 
             <input
               type="email"
-              placeholder="Email"
               value={editEmployee.email || ""}
               onChange={(e) =>
                 setEditEmployee({
@@ -164,11 +190,11 @@ function ManageEmployees({ employees, setEmployees }) {
                   email: e.target.value,
                 })
               }
+              placeholder="Email"
             />
 
             <input
               type="text"
-              placeholder="Department"
               value={editEmployee.department || ""}
               onChange={(e) =>
                 setEditEmployee({
@@ -176,11 +202,11 @@ function ManageEmployees({ employees, setEmployees }) {
                   department: e.target.value,
                 })
               }
+              placeholder="Department"
             />
 
             <input
               type="number"
-              placeholder="Salary"
               value={editEmployee.salary || ""}
               onChange={(e) =>
                 setEditEmployee({
@@ -188,6 +214,62 @@ function ManageEmployees({ employees, setEmployees }) {
                   salary: e.target.value,
                 })
               }
+              placeholder="Salary"
+            />
+
+            {/* ROLE */}
+            <select
+              value={editEmployee.role || "Employee"}
+              onChange={(e) =>
+                setEditEmployee({
+                  ...editEmployee,
+                  role: e.target.value,
+                })
+              }
+            >
+              <option value="Employee">Employee</option>
+              <option value="Manager">Manager</option>
+              <option value="Admin">Admin</option>
+            </select>
+
+            {/* STATUS */}
+            <select
+              value={editEmployee.status || "Active"}
+              onChange={(e) =>
+                setEditEmployee({
+                  ...editEmployee,
+                  status: e.target.value,
+                })
+              }
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+
+            {/* PHONE */}
+            <input
+              type="text"
+              value={editEmployee.phone || ""}
+              onChange={(e) =>
+                setEditEmployee({
+                  ...editEmployee,
+                  phone: e.target.value,
+                })
+              }
+              placeholder="Phone"
+            />
+
+            {/* ADDRESS */}
+            <input
+              type="text"
+              value={editEmployee.address || ""}
+              onChange={(e) =>
+                setEditEmployee({
+                  ...editEmployee,
+                  address: e.target.value,
+                })
+              }
+              placeholder="Address"
             />
 
             <button onClick={handleUpdate}>

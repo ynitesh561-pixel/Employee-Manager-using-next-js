@@ -7,87 +7,87 @@ function AddEmployee({ employees, setEmployees }) {
   const [department, setDepartment] = useState("");
   const [salary, setSalary] = useState("");
 
+  // NEW FIELDS (backend model sync)
+  const [role, setRole] = useState("Employee");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [status, setStatus] = useState("Active");
+
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    
-    if (!name.trim()) {
-      setMessage("Please enter employee name");
-      setMessageType("error");
-      return;
-    }
-
-    if (!email.trim()) {
-      setMessage("Please enter email address");
-      setMessageType("error");
-      return;
-    }
+    // Basic validations
+    if (!name.trim()) return setError("Please enter employee name");
+    if (!email.trim()) return setError("Please enter email address");
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email))
+      return setError("Please enter a valid email");
 
-    if (!emailRegex.test(email)) {
-      setMessage("Please enter a valid email address");
-      setMessageType("error");
-      return;
-    }
-
-    if (!department.trim()) {
-      setMessage("Please enter department");
-      setMessageType("error");
-      return;
-    }
-
-    if (!salary || Number(salary) <= 0) {
-      setMessage("Please enter a valid salary");
-      setMessageType("error");
-      return;
-    }
+    if (!department.trim()) return setError("Please enter department");
+    if (!salary || Number(salary) <= 0)
+      return setError("Please enter valid salary");
 
     try {
-     const res = await axios.post(
-  "http://localhost:5000/api/employees",
+      const token = localStorage.getItem("token");
+
+      const res = await axios.post(
+        "http://localhost:5000/api/employees",
         {
           name,
           email,
           department,
           salary: Number(salary),
+          role,
+          phone,
+          address,
+          status,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
-      setEmployees((prev) => [...prev, res.data]);
+      setEmployees((prev) => [
+        ...prev,
+        res.data.employee || res.data,
+      ]);
 
       setMessage("Employee Added Successfully");
       setMessageType("success");
 
+      // reset form
       setName("");
       setEmail("");
       setDepartment("");
       setSalary("");
+      setRole("Employee");
+      setPhone("");
+      setAddress("");
+      setStatus("Active");
 
-      setTimeout(() => {
-        setMessage("");
-      }, 2000);
-
+      setTimeout(() => setMessage(""), 2000);
     } catch (error) {
-      console.log("API Error:", error.response?.data);
+      console.log(error.response?.data);
 
-      if (error.response?.data?.email) {
-        setMessage(error.response.data.email[0]);
-      } else if (error.response?.data?.name) {
-        setMessage(error.response.data.name[0]);
-      } else {
-        setMessage("Failed to add employee");
-      }
-
+      setMessage(
+        error.response?.data?.message ||
+          "Failed to add employee"
+      );
       setMessageType("error");
 
-      setTimeout(() => {
-        setMessage("");
-      }, 3000);
+      setTimeout(() => setMessage(""), 3000);
     }
+  };
+
+  const setError = (msg) => {
+    setMessage(msg);
+    setMessageType("error");
   };
 
   return (
@@ -137,9 +137,42 @@ function AddEmployee({ employees, setEmployees }) {
           onChange={(e) => setSalary(e.target.value)}
         />
 
-        <button type="submit">
-          Add Employee
-        </button>
+        {/* ROLE */}
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+        >
+          <option value="Employee">Employee</option>
+          <option value="Manager">Manager</option>
+          <option value="Admin">Admin</option>
+        </select>
+
+        {/* PHONE */}
+        <input
+          type="text"
+          placeholder="Phone Number"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+
+        {/* ADDRESS */}
+        <input
+          type="text"
+          placeholder="Address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+        />
+
+        {/* STATUS */}
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+
+        <button type="submit">Add Employee</button>
       </form>
     </div>
   );
